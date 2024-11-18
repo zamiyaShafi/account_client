@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   CButton,
   CCard,
@@ -17,94 +17,82 @@ import {
   CTableHeaderCell,
   CTableBody,
   CTableDataCell,
-} from '@coreui/react'
-import Select from 'react-select'
-import axios from 'axios'
-import { api } from '../../../config'
+} from '@coreui/react';
+import Select from 'react-select';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchLedgers, submitTransactions } from '../../store/ledgerSlice'; // Adjust the path to your slice
+import axios from 'axios';
+import { api } from '../../../config';
 
 const LedgerReport = () => {
-  const [accounts, setAccounts] = useState([])
+  const dispatch = useDispatch();
+
+  // Fetch the ledger state from the Redux store
+  const { ledgers, status, error } = useSelector((state) => state.ledger);
+
   const [formData, setFormData] = useState({
-    fromDate: null,
-    toDate: null,
+    fromDate: '',
+    toDate: '',
     ledgerAccount: null, // Selected account will be an object
-  })
+  });
 
-  const [reportData, setReportData] = useState([])
-  const [debitData, setDebitData] = useState([])
-  const [creditData, setCreditData] = useState([])
+  const [reportData, setReportData] = useState([]);
+  const [debitData, setDebitData] = useState([]);
+  const [creditData, setCreditData] = useState([]);
 
-  // Fetch accounts from the API
+  // Fetch ledgers on component mount
   useEffect(() => {
-    axios
-      .get(`${api}/ledger`)
-      .then((res) => {
-        setAccounts(res.data.data)
-      })
-      .catch((error) => {
-        console.log(error)
-      })
-  }, [])
+    if (status === 'idle') {
+      dispatch(fetchLedgers());
+    }
+  }, [status, dispatch]);
 
-  // Format options for react-select
-  const formatOptions = (accounts) => {
-
-    return accounts.map((account) => ({
-
-      value: account._id,
-      label: account.ledger_name,
-    }))
-  }
+  // Format ledger data into options for react-select
+  const formatOptions = (ledgers) => {
+    return ledgers.map((ledger) => ({
+      value: ledger._id,
+      label: ledger.ledger_name,
+    }));
+  };
 
   // Handle form input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
-  // Handle Select input change
+  // Handle select input change
   const handleSelectChange = (selectedOption) => {
     setFormData({
       ...formData,
       ledgerAccount: selectedOption,
-    })
-  }
+    });
+  };
 
+  // Handle form submission
+   // Handle form submission
+   const handleSubmit = (e) => {
+    e.preventDefault();
 
-
-
-
-
-  // Handle form submit
-  const handleSubmit = (e) => {
-    e.preventDefault()
-
-    const { fromDate, toDate, ledgerAccount } = formData
+    const { fromDate, toDate, ledgerAccount } = formData;
 
     if (!ledgerAccount) {
-      alert('Please Choose Ledger Account fields!')
-      return
+      alert('Please choose a Ledger Account!');
+      return;
     }
 
-    // Submit the data to the API
-    axios
-      .post(`${api}/ledger-transactions`, {
+    // Dispatch the submitTransactions thunk
+    dispatch(
+      submitTransactions({
         fromDate,
         toDate,
-        ledgerId: ledgerAccount.value, // Send the selected account ID
+        ledgerId: ledgerAccount.value, 
+        // Send the selected account ID
       })
-      .then((res) => {
-        console.log(res.data.credit_transactions, 'ghj')
-
-        setCreditData(res.data.credit_transactions)
-        setDebitData(res.data.debit_transactions)
-      })
-      .catch((error) => {
-        console.log(error)
-      })
-  }
+    );
+  };
 
   return (
     <div>
@@ -151,7 +139,7 @@ const LedgerReport = () => {
                   <Select
                     id="ledgerAccount"
                     name="ledgerAccount"
-                    options={formatOptions(accounts)}
+                    options={formatOptions(ledgers)} // Use fetched ledgers
                     isSearchable
                     onChange={handleSelectChange}
                     required
@@ -167,6 +155,7 @@ const LedgerReport = () => {
               </CForm>
             </CCardBody>
 
+            {/* Table layout for Debit and Credit Transactions */}
             <div
               style={{
                 display: 'flex',
@@ -176,64 +165,59 @@ const LedgerReport = () => {
               }}
             >
               <div>Dr</div>
-              <div><h5>{formData?.ledgerAccount?.label}</h5></div>
+              <div>
+                <h5>{formData?.ledgerAccount?.label}</h5>
+              </div>
               <div>Cr</div>
             </div>
 
             <CCardBody style={{ display: 'flex' }}>
+              {/* Debit Transactions Table */}
               <CTable style={{ border: '2px solid black' }}>
                 <CTableHead color="dark">
                   <CTableRow>
                     <CTableHeaderCell scope="col">Date</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Perticulars</CTableHeaderCell>
+                    <CTableHeaderCell scope="col">Particulars</CTableHeaderCell>
                     <CTableHeaderCell scope="col">J.F</CTableHeaderCell>
                     <CTableHeaderCell scope="col">Amount</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                {debitData?.map((item) => {
-                const isoDateString = item.voucher_date;
-                const formattedDate = isoDateString.split('T')[0].split('-').reverse().join('-');
-          
-                
+                  {debitData.map((item) => {
+                    const formattedDate = item.voucher_date.split('T')[0].split('-').reverse().join('-');
                     return (
-                      <CTableRow>
+                      <CTableRow key={item._id}>
                         <CTableDataCell>{formattedDate}</CTableDataCell>
                         <CTableDataCell>{item.debit_account.ledger_name}</CTableDataCell>
-
                         <CTableDataCell></CTableDataCell>
                         <CTableDataCell>{item.debit_amount}</CTableDataCell>
                       </CTableRow>
-                    )
+                    );
                   })}
                 </CTableBody>
               </CTable>
 
-              {/* Additional table (for credits or similar) */}
+              {/* Credit Transactions Table */}
               <CTable style={{ border: '2px solid black' }}>
                 <CTableHead color="dark">
                   <CTableRow>
                     <CTableHeaderCell scope="col">Date</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Perticulars</CTableHeaderCell>
+                    <CTableHeaderCell scope="col">Particulars</CTableHeaderCell>
                     <CTableHeaderCell scope="col">J.F</CTableHeaderCell>
                     <CTableHeaderCell scope="col">Amount</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {creditData?.map((item) => {
-                const isoDateString = item.voucher_date;
-                const formattedDate = isoDateString.split('T')[0].split('-').reverse().join('-');
-          
-                
+                  {creditData.map((item) => {
+                    const formattedDate = item.voucher_date.split('T')[0].split('-').reverse().join('-');
                     return (
-                      <CTableRow>
+                      <CTableRow key={item._id}>
                         <CTableDataCell>{formattedDate}</CTableDataCell>
                         <CTableDataCell>{item.credit_account.ledger_name}</CTableDataCell>
-
                         <CTableDataCell></CTableDataCell>
                         <CTableDataCell>{item.credit_amount}</CTableDataCell>
                       </CTableRow>
-                    )
+                    );
                   })}
                 </CTableBody>
               </CTable>
@@ -242,7 +226,7 @@ const LedgerReport = () => {
         </CCol>
       </CRow>
     </div>
-  )
-}
+  );
+};
 
-export default LedgerReport
+export default LedgerReport;

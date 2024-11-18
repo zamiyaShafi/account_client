@@ -1,18 +1,14 @@
-import { legacy_createStore as createStore } from 'redux'
+// src/store/index.js
 
-const initialState = {
-  sidebarShow: true,
-  theme: 'light',
-}
+import { configureStore } from '@reduxjs/toolkit';
+import { ledgerReducer } from './store/ledgerSlice'; // We'll create this next
+import changeState from './store/settingsReducer'; // Create a separate file for settings
 
-const changeState = (state = initialState, { type, ...rest }) => {
-  switch (type) {
-    case 'set':
-      return { ...state, ...rest }
-    default:
-      return state
-  }
-}
+const store = configureStore({
+  reducer: {
+    settings: changeState, // Existing settings reducer
+    ledger: ledgerReducer, // New ledger reducer
+  },
+});
 
-const store = createStore(changeState)
-export default store
+export default store;

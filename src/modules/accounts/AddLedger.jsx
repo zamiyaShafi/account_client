@@ -18,8 +18,11 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from '@coreui/react'
+
 import axios from 'axios'
 import { api } from '../../../config'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchGroup, submitLedger } from '../../store/ledgerSlice'
 
 const LedgerForm = ({ selectedGroup, handleSubmit, validated, nature, setNature }) => {
   return (
@@ -34,15 +37,15 @@ const LedgerForm = ({ selectedGroup, handleSubmit, validated, nature, setNature 
         <CFormLabel htmlFor="ledgerName">Ledger Name</CFormLabel>
         <CFormInput type="text" id="ledgerName" required />
         <CFormFeedback valid>Looks good!</CFormFeedback>
-        <CFormFeedback invalid>Please Fill out this field!</CFormFeedback>
+        <CFormFeedback invalid>Please fill out this field!</CFormFeedback>
       </CCol>
 
       {/* Group Name (Read-Only) */}
       <CCol md={6}>
         <CFormLabel htmlFor="groupName">Group Name</CFormLabel>
-        <CFormInput type="text" id="groupName" value={selectedGroup.groupName} readOnly  required/>
+        <CFormInput type="text" id="groupName" value={selectedGroup.groupName} readOnly required />
         <CFormFeedback valid>Looks good!</CFormFeedback>
-        <CFormFeedback invalid>Please Fill out this field!</CFormFeedback>
+        <CFormFeedback invalid>Please fill out this field!</CFormFeedback>
       </CCol>
 
       {/* Opening Balance */}
@@ -102,18 +105,21 @@ const AddLedger = () => {
   const [validated, setValidated] = useState(false)
   const [nature, setNature] = useState('') // State for nature
 
+  const dispatch = useDispatch()
+  const { groups, Groupstatus, Grouperror } = useSelector((state) => state.ledger)
+
   useEffect(() => {
-    axios
-      .get(`${api}/account-groups`)
-      .then((res) => {
-        console.log(res.data, 'jjj')
-        setAccountGroups(res.data.groups)
-        setFilteredGroups(res.data.groups.slice(0, 10)) // Show first 10 by default
-      })
-      .catch((error) => {
-        console.log(error)
-      })
-  }, [])
+    if (Groupstatus === 'idle') {
+      dispatch(fetchGroup()) // Fetch groups only if the status is 'idle'
+    }
+  }, [dispatch, Groupstatus])
+
+  useEffect(() => {
+    if (groups) {
+      setAccountGroups(groups) // Store fetched groups in state
+      setFilteredGroups(groups.slice(0, 10)) // Initially show first 10 groups
+    }
+  }, [groups])
 
   // Handle group selection
   const handleGroupSelect = (groupId, groupName, nature) => {
@@ -137,39 +143,34 @@ const AddLedger = () => {
 
   // Handle form submission
   const handleSubmit = (event) => {
-    event.preventDefault() // Prevent default form submission
-
-    const form = event.currentTarget
+    event.preventDefault();
+ 
+    const form = event.currentTarget;
     if (form.checkValidity() === false) {
-      event.stopPropagation()
+       event.stopPropagation();
     } else {
-      console.log(selectedGroup, 'h')
-      // Collect form data
-      const ledgerData = {
-        ledgerName: form.ledgerName.value,
-        groupId: selectedGroup.groupId, // Send group ID to backend
-        openingBalance: form.openingBalance.value,
-        balanceType: nature,
-        description: form.description.value,
-      }
-
-      // Submit data to the backend
-      axios
-        .post(`${api}/ledger`, ledgerData)
-        .then((response) => {
-          console.log('Ledger created successfully:', response.data)
-          form.reset() // Reset the form after submission
-          setSelectedGroup({ groupId: '', groupName: '' }) // Reset selected group
-          setNature('') // Reset nature
-          setValidated(false) // Reset form validation state
-        })
-        .catch((error) => {
-          console.error('Error creating ledger:', error)
-        })
+       const ledgerData = {
+          ledgerName: form.ledgerName.value,
+          groupId: selectedGroup.groupId,
+          openingBalance: form.openingBalance.value,
+          balanceType: nature,
+          description: form.description.value,
+       }; 
+       
+       dispatch(submitLedger(ledgerData))
+         .then(() => {
+             form.reset();
+             setValidated(false);
+             setSelectedGroup({ groupId: '', groupName: '' });
+             setNature('');
+         })
+         .catch((error) => {
+             console.error('Error creating ledger:', error);
+         });
     }
-
-    setValidated(true)
-  }
+    setValidated(true);
+ };
+ 
 
   return (
     <div style={{ display: 'flex', gap: '10px' }}>

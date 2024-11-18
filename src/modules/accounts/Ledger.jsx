@@ -1,45 +1,33 @@
-import React from 'react'
+import React, { useEffect } from 'react';
 import {
   CCard,
   CCardBody,
   CCardHeader,
   CCol,
-  CRow,
   CTable,
   CTableBody,
-  CTableCaption,
-  CTableDataCell,
   CTableHead,
-  CTableHeaderCell,
   CTableRow,
+  CTableHeaderCell,
+  CTableDataCell,
   CButton,
   CTooltip,
   CTabs,
-  CTabList,
-  CTab,
   CTabContent,
-  CTabPanel,
-} from '@coreui/react'
-import { DocsExample } from 'src/components'
-import { Link } from 'react-router-dom'
-import { api } from '../../../config'
-import axios from 'axios'
-import { useState, useEffect } from 'react'
-import LedgerReport from './LedgerReport'
+  CTabPane,
+} from '@coreui/react';
+import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchLedgers } from '../../store/ledgerSlice'; // Adjust the path as needed
+import LedgerReport from './LedgerReport';
 
 function Ledger() {
-  const [ledgers, setLedgers] = useState([])
+  const dispatch = useDispatch();
+  const { ledgers, status, error } = useSelector((state) => state.ledger);
+
   useEffect(() => {
-    axios
-      .get(`${api}/ledger`)
-      .then((res) => {
-        console.log(res.data.data)
-        setLedgers(res.data.data)
-      })
-      .catch((error) => {
-        console.log(error)
-      })
-  }, [])
+    dispatch(fetchLedgers());
+  }, [dispatch]);
 
   return (
     <div>
@@ -63,13 +51,9 @@ function Ledger() {
             </CButton>
           </CCardHeader>
 
-          <CTabs activeItemKey="profile">
-            <CTabList variant="tabs">
-              <CTab itemKey="all">All</CTab>
-              <CTab itemKey="report">Ledger Report</CTab>
-            </CTabList>
+          <CTabs activeTab="all">
             <CTabContent>
-              <CTabPanel className="p-3" itemKey="all">
+              <CTabPane visible={true} tabId="all">
                 <CCardBody>
                   <CTable>
                     <CTableHead color="dark">
@@ -83,9 +67,17 @@ function Ledger() {
                       </CTableRow>
                     </CTableHead>
                     <CTableBody>
-                      {ledgers.length > 0 ? (
+                      {status === 'loading' ? (
+                        <CTableRow>
+                          <CTableDataCell colSpan="6">Loading...</CTableDataCell>
+                        </CTableRow>
+                      ) : status === 'failed' ? (
+                        <CTableRow>
+                          <CTableDataCell colSpan="6">Error: {error}</CTableDataCell>
+                        </CTableRow>
+                      ) : ledgers.length > 0 ? (
                         ledgers.map((item, index) => (
-                          <CTableRow>
+                          <CTableRow key={item.id}> {/* Use a unique key */} 
                             <CTableHeaderCell scope="row">{index + 1}</CTableHeaderCell>
                             <CTableDataCell>{item.ledger_name}</CTableDataCell>
                             <CTableDataCell>{item.group_id?.groupName}</CTableDataCell>
@@ -95,24 +87,24 @@ function Ledger() {
                           </CTableRow>
                         ))
                       ) : (
-                        <>No Data Found</>
+                        <CTableRow>
+                          <CTableDataCell colSpan="6">No Data Found</CTableDataCell>
+                        </CTableRow>
                       )}
                     </CTableBody>
                   </CTable>
                 </CCardBody>
-              </CTabPanel>
+              </CTabPane>
 
-              <CTabPanel className="p-3" itemKey="report">
-
-                <LedgerReport/>
-               
-              </CTabPanel>
+              <CTabPane tabId="report">
+                <LedgerReport />
+              </CTabPane>
             </CTabContent>
           </CTabs>
         </CCard>
       </CCol>
     </div>
-  )
+  );
 }
 
-export default Ledger
+export default Ledger;

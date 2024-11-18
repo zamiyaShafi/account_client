@@ -13,10 +13,22 @@ import {
   CTableHeaderCell,
   CTableRow,
   CButton,
-  CTooltip
+  CTooltip,
+  CTabs,
+  CTabList,
+  CTab,
+  CTabContent,
+  CTabPanel,
 } from '@coreui/react'
-import { DocsExample } from 'src/components'
+// import { DocsExample } from 'src/components'
 import { Link } from 'react-router-dom'
+import LedgerReport from './LedgerReport'
+import PurchaseReport from './VocherReport/PurchaseReport'
+import SalesReport from './VocherReport/SalesReport'
+import ReciptReport from './VocherReport/ReciptReport'
+import PaymentReport from './VocherReport/PaymentReport'
+import ContraReport from './VocherReport/ContraReport'
+import JournalReport from './VocherReport/JournalReport'
 
 function Vouchers() {
   return (
@@ -25,10 +37,9 @@ function Vouchers() {
         <CCard className="mb-4">
           <CCardHeader     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-            <strong>Manage Vouchers</strong> <small>Table head</small>
+            <strong>Manage Vouchers</strong> <small>Voucher Report</small>
             </div>
             <CButton color="primary" shape="rounded-0" >
-            
 
               <CTooltip
                 content="Add New Vouchers Here"
@@ -41,14 +52,21 @@ function Vouchers() {
             </CButton>
           </CCardHeader>
 
-          <CCardBody>
-            <p className="text-body-secondary small">
-              Similar to tables and dark tables, use the modifier prop{' '}
-              <code>color=&#34;light&#34;</code> or <code>color=&#34;dark&#34;</code> to make{' '}
-              <code>&lt;CTableHead&gt;</code>s appear light or dark gray.
-            </p>
+          <CTabs activeItemKey="profile">
+            <CTabList variant="tabs">
+         
+              <CTab itemKey="purchase">Purchase</CTab>
+              <CTab itemKey="sales">Sales</CTab>
+              <CTab itemKey="recipt">Recipt</CTab>
+              <CTab itemKey="payment">Payment</CTab>
+              <CTab itemKey="contra"> Contra Voucher</CTab>
+              <CTab itemKey="journal">Journal Voucher</CTab>
 
-            <DocsExample href="components/table#table-head">
+            </CTabList>
+            <CTabContent>
+              <CTabPanel className="p-3" itemKey="all">
+
+          {/* <CCardBody>
               <CTable>
                 <CTableHead color="dark">
                   <CTableRow>
@@ -78,8 +96,39 @@ function Vouchers() {
                   </CTableRow>
                 </CTableBody>
               </CTable>
-            </DocsExample>
-          </CCardBody>
+         
+          </CCardBody> */}
+          </CTabPanel>
+
+          <CTabPanel className="p-3" itemKey="purchase">
+          <PurchaseReport/>
+          </CTabPanel>
+
+          <CTabPanel className="p-3" itemKey="sales">
+          <SalesReport/>
+          </CTabPanel>
+
+          <CTabPanel className="p-3" itemKey="recipt">
+          <ReciptReport/>
+          </CTabPanel>
+
+          <CTabPanel className="p-3" itemKey="payment">
+          <PaymentReport/>
+          </CTabPanel>
+
+          <CTabPanel className="p-3" itemKey="contra">
+          <ContraReport/>
+          </CTabPanel>
+
+          <CTabPanel className="p-3" itemKey="journal">
+          <JournalReport/>
+          </CTabPanel>
+
+
+          
+
+</CTabContent>
+</CTabs>
         </CCard>
       </CCol>
     </div>

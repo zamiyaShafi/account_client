@@ -34,6 +34,7 @@ const App = () => {
 
   return (
     <HashRouter>
+    
       <Suspense
         fallback={
           <div className="pt-3 text-center">
@@ -49,7 +50,8 @@ const App = () => {
           <Route path="*" name="Home" element={<DefaultLayout />} />
         </Routes>
       </Suspense>
-    </HashRouter>
+   
+    </HashRouter> 
   )
 }
 
