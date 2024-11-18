@@ -9,6 +9,7 @@ const Ledger = React.lazy(() => import('./modules/accounts/Ledger'))
 const AddLedger = React.lazy(() => import('./modules/accounts/AddLedger'))
 const Vouchers = React.lazy(() => import('./modules/accounts/Vouchers'))
 const AddVouchers = React.lazy(() => import('./modules/accounts/AddVouchers'))
+const Report=React.lazy(()=>import('./modules/accounts/Report')) 
 
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -65,6 +66,7 @@ const routes = [
   { path: '/accounts/add-ledger', name: 'Ledger', element: AddLedger },
   { path: '/accounts/voucher', name: 'Voucher', element: Vouchers },
   { path: '/accounts/add-voucher', name: 'Voucher', element: AddVouchers },
+  { path: '/accounts/report', name: 'Report', element: Report },
 
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

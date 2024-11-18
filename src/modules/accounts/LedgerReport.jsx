@@ -30,10 +30,14 @@ const LedgerReport = () => {
     ledgerAccount: null, // Selected account will be an object
   })
 
-  const [reportData, setReportData] = useState([])
+
   const [debitData, setDebitData] = useState([])
   const [creditData, setCreditData] = useState([])
-
+  const [debitBalance, setDebitBalance] = useState(0)
+  const [creditBalance, setCreditBalance] = useState(0)
+  const [openingBalance, setOpeningBalance] = useState(0)
+  const [balanceType, setBalanceType] = useState('')
+  const [ledgerAccount, setLedgerAccount] = useState('')
   // Fetch accounts from the API
   useEffect(() => {
     axios
@@ -46,11 +50,18 @@ const LedgerReport = () => {
       })
   }, [])
 
+  useEffect(() => {
+  
+    if (openingBalance > 0 && balanceType === 'Debit') {
+      setCreditBalance((prevBalance) => prevBalance + openingBalance)
+    } else if (openingBalance > 0 && balanceType === 'Credit') {
+      setDebitBalance((prevBalance) => prevBalance + openingBalance)
+    }
+  }, [openingBalance, balanceType, setCreditBalance, setDebitBalance])
+
   // Format options for react-select
   const formatOptions = (accounts) => {
-
     return accounts.map((account) => ({
-
       value: account._id,
       label: account.ledger_name,
     }))
@@ -72,11 +83,6 @@ const LedgerReport = () => {
     })
   }
 
-
-
-
-
-
   // Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -96,10 +102,27 @@ const LedgerReport = () => {
         ledgerId: ledgerAccount.value, // Send the selected account ID
       })
       .then((res) => {
-        console.log(res.data.credit_transactions, 'ghj')
+        console.log(res.data, 'data')
+
+        setOpeningBalance(res.data.ledgerData.opening_balance)
+      
+        setBalanceType(res.data.ledgerData.balance_type)
+        setLedgerAccount(res.data.ledgerData.ledger_name)
 
         setCreditData(res.data.credit_transactions)
         setDebitData(res.data.debit_transactions)
+
+        const totalDebit = res.data.debit_transactions.reduce(
+          (acc, item) => acc + parseFloat(item.debit_amount),
+          0,
+        )
+        const totalCredit = res.data.credit_transactions.reduce(
+          (acc, item) => acc + parseFloat(item.credit_amount),
+          0,
+        )
+
+        setDebitBalance(totalDebit)
+        setCreditBalance(totalCredit)
       })
       .catch((error) => {
         console.log(error)
@@ -176,7 +199,9 @@ const LedgerReport = () => {
               }}
             >
               <div>Dr</div>
-              <div><h5>{formData?.ledgerAccount?.label}</h5></div>
+              <div>
+                <h5>{ledgerAccount}</h5>
+              </div>
               <div>Cr</div>
             </div>
 
@@ -190,22 +215,59 @@ const LedgerReport = () => {
                     <CTableHeaderCell scope="col">Amount</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
-                <CTableBody>
-                {debitData?.map((item) => {
-                const isoDateString = item.voucher_date;
-                const formattedDate = isoDateString.split('T')[0].split('-').reverse().join('-');
-          
-                
+                <CTableBody >
+                  {openingBalance > 0 && balanceType == 'Credit' ? (
+                    <CTableRow>
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}>Balance B/d</CTableDataCell>
+
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}>{openingBalance}</CTableDataCell>
+                    </CTableRow>
+                  ) : (
+                    <></>
+                  )}
+                  {debitData?.map((item) => {
+                    const isoDateString = item.voucher_date
+                    const formattedDate = isoDateString.split('T')[0].split('-').reverse().join('-')
+
                     return (
                       <CTableRow>
-                        <CTableDataCell>{formattedDate}</CTableDataCell>
-                        <CTableDataCell>{item.debit_account.ledger_name}</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{formattedDate}</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{item.debit_account.ledger_name}</CTableDataCell>
 
-                        <CTableDataCell></CTableDataCell>
-                        <CTableDataCell>{item.debit_amount}</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{item.debit_amount}</CTableDataCell>
                       </CTableRow>
                     )
                   })}
+
+                  {debitBalance > creditBalance ? (
+                    <CTableRow>
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}>{debitBalance}</CTableDataCell>
+                    </CTableRow>
+                  ) : (
+                    <>
+                      <CTableRow>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>Balance c/d</CTableDataCell>
+
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{creditBalance - debitBalance}</CTableDataCell>
+                      </CTableRow>
+                      <CTableRow>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+
+                        <CTableDataCell style={{border:"1px solid black"}}>{creditBalance}</CTableDataCell>
+                      </CTableRow>
+                    </>
+                  )}
                 </CTableBody>
               </CTable>
 
@@ -220,21 +282,58 @@ const LedgerReport = () => {
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
+                  {openingBalance > 0 && balanceType == 'Debit' ? (
+                    <CTableRow>
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}>Balance B/d</CTableDataCell>
+
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}>{openingBalance}</CTableDataCell>
+                    </CTableRow>
+                  ) : (
+                    <></>
+                  )}
                   {creditData?.map((item) => {
-                const isoDateString = item.voucher_date;
-                const formattedDate = isoDateString.split('T')[0].split('-').reverse().join('-');
-          
-                
+                    const isoDateString = item.voucher_date
+                    const formattedDate = isoDateString.split('T')[0].split('-').reverse().join('-')
+
                     return (
                       <CTableRow>
-                        <CTableDataCell>{formattedDate}</CTableDataCell>
-                        <CTableDataCell>{item.credit_account.ledger_name}</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{formattedDate}</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{item.credit_account.ledger_name}</CTableDataCell>
 
-                        <CTableDataCell></CTableDataCell>
-                        <CTableDataCell>{item.credit_amount}</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{item.credit_amount}</CTableDataCell>
                       </CTableRow>
                     )
                   })}
+
+                  {creditBalance > debitBalance ? (
+                    <CTableRow>
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+
+                      <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                      <CTableDataCell style={{border:"1px solid black"}}>{creditBalance}</CTableDataCell>
+                    </CTableRow>
+                  ) : (
+                    <>
+                      <CTableRow>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>Balance c/d</CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+
+                        <CTableDataCell style={{border:"1px solid black"}}>{debitBalance - creditBalance}</CTableDataCell>
+                      </CTableRow>
+                      <CTableRow>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+
+                        <CTableDataCell style={{border:"1px solid black"}}></CTableDataCell>
+                        <CTableDataCell style={{border:"1px solid black"}}>{debitBalance}</CTableDataCell>
+                      </CTableRow>
+                    </>
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>
