@@ -63,13 +63,13 @@ function Ledger() {
             </CButton>
           </CCardHeader>
 
-          <CTabs activeItemKey="profile">
-            <CTabList variant="tabs">
+          <CTabs activeItemKey="all">
+            <CTabList variant="tabs" >
               <CTab itemKey="all">All</CTab>
               <CTab itemKey="report">Ledger Report</CTab>
             </CTabList>
             <CTabContent>
-              <CTabPanel className="p-3" itemKey="all">
+              <CTabPanel className="p-3" itemKey="all" >
                 <CCardBody>
                   <CTable>
                     <CTableHead color="dark">
@@ -91,7 +91,10 @@ function Ledger() {
                             <CTableDataCell>{item.group_id?.groupName}</CTableDataCell>
                             <CTableDataCell>{item.opening_balance}</CTableDataCell>
                             <CTableDataCell>{item.current_balance}</CTableDataCell>
-                            <CTableDataCell>{item.balance_type}</CTableDataCell>
+                            <CTableDataCell>
+  {item.current_balance < 0 ? 'Credit' : item.balance_type}
+</CTableDataCell>
+
                           </CTableRow>
                         ))
                       ) : (

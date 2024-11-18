@@ -46,6 +46,11 @@ const _nav = [
         name: 'Mangage Vouchers',
         to: '/accounts/voucher',
       },
+      {
+        component: CNavItem,
+        name: 'Mangage Reports',
+        to: '/accounts/report',
+      },
     ],
   },
 
