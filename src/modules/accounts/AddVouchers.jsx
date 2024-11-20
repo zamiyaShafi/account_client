@@ -131,8 +131,14 @@
                       required
                     >
                       <option value="">Choose...</option>
-                      <option value="debit">Debit</option>
-                      <option value="credit">Credit</option>
+                      <option value="Receipt">Receipt</option>
+                      <option value="Payment">Payment</option>
+                      <option value="Sales">Sales</option>
+
+                      <option value="Purchase">Purchase</option>
+                      <option value="Journal">Journal</option>
+                      <option value="Contra">Contra</option>
+
                     </CFormSelect>
                     <CFormFeedback invalid>Please select a voucher type.</CFormFeedback>
                   </CCol>
